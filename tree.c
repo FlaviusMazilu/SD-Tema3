@@ -20,9 +20,33 @@ FileTree createFileTree(char* rootFolderName) {
 
 	return file_tree;
 }
+void freeTree_wrapper(TreeNode *current_node)
+{
+	FolderContent *folder_content = current_node->content;
+	linked_list_t *list = folder_content->children;
+	ll_node_t *walk = list->head;
+
+	while (walk) {
+		TreeNode *curr_TN = walk->data;
+		if (curr_TN->type == FILE_NODE) {
+			FileContent *file_content = curr_TN->content;
+			free(file_content->text);
+		} else 
+			freeTree_wrapper(curr_TN);
+
+		free(curr_TN->name);
+		free(curr_TN->content);
+		walk = walk->next;
+	}
+	ll_free(&list);
+}
 
 void freeTree(FileTree fileTree) {
-	// TODO
+	TreeNode *root = fileTree.root;
+	freeTree_wrapper(root);
+	free(root->name);
+	free(root->content);
+	free(root);
 }
 
 
@@ -64,10 +88,8 @@ void pwd(TreeNode* treeNode) {
 	// TODO
 }
 
-
-TreeNode* cd(TreeNode* currentNode, char* path) {
-	TreeNode *currentNode_cp = currentNode;
-	char *path_cp = strdup(path);
+TreeNode* cd_wrapper(TreeNode *currentNode, char *path)
+{
     char *token = strtok(path, "/");
 	while (token) {
 		if (strcmp(token, PARENT_DIR) == 0)
@@ -77,20 +99,64 @@ TreeNode* cd(TreeNode* currentNode, char* path) {
 		
 		// daca a vrut sa sara dincolo de root sau la un dir care nu exista
 		if (!currentNode || currentNode->type == FILE_NODE) {
-			printf("cd: no such file or directory: %s\n", path_cp);
-			free(path_cp);
-			return currentNode_cp;
+			return NULL;
 		}
 
-		// printf("--->%s\n", token);
 		token = strtok(NULL, "/");
 	}
+	return currentNode;
+}
+TreeNode* cd(TreeNode* currentNode, char* path)
+{
+	TreeNode *currentNode_cp = currentNode;
+	char *path_cp = strdup(path);
+	currentNode = cd_wrapper(currentNode, path);
+
+	if (!currentNode || currentNode->type == FILE_NODE) {
+		printf("cd: no such file or directory: %s\n", path_cp);
+		free(path_cp);
+		return currentNode_cp;
+	}
+
 	free(path_cp);
 	return currentNode;
 }
+void tree_wrapper(TreeNode *currentNode, int *dr, int *fl, int tabs)
+{
+	FolderContent *folder_content = currentNode->content;
+	linked_list_t *list = folder_content->children;
+	ll_node_t *walk = list->head;
+	
+	while (walk) {
+		TreeNode *curr_TN = walk->data;
+		if (curr_TN->type == FILE_NODE)
+			(*fl)++;
+		else
+			(*dr)++;
 
+		for (int i = 0; i < tabs; i++)
+			printf("\t");
+		printf("%s\n", curr_TN->name);
+
+		if (curr_TN->type == FOLDER_NODE)
+			tree_wrapper(curr_TN, dr, fl, tabs + 1);
+		walk = walk->next;
+	}
+}
 void tree(TreeNode* currentNode, char* arg) {
-	// TODO
+	char *path_cp = strdup(arg);
+	if (*arg != 0) {
+		currentNode = cd_wrapper(currentNode, arg);
+		if (!currentNode || currentNode->type == FILE_NODE) {
+			printf("%s [error opening dir]\n\n0 directories, 0 files\n", path_cp);
+			free(path_cp);
+			return;
+		}
+	}
+	int directories = 0, files = 0;
+	tree_wrapper(currentNode, &directories, &files, 0);
+	printf("%d directories, %d files\n", directories, files);
+	free(path_cp);
 }
 
 
@@ -105,6 +171,7 @@ void mkdir(TreeNode* currentNode, char* folderName) {
 
 	TreeNode *new_dir = create_TN(currentNode, folderName, FOLDER_NODE, NULL);
 	ll_add_nth_node(list, 0, new_dir);
+	free(new_dir);
 
 }
 
@@ -141,6 +208,7 @@ void touch(TreeNode* currentNode, char* fileName, char* fileContent) {
 	TreeNode *new_TN = create_TN(currentNode, fileName, FILE_NODE, fileContent);
 
 	ll_add_nth_node(list, 0, new_TN);
+	free(new_TN);
 }
 
 void cp(TreeNode* currentNode, char* source, char* destination) {

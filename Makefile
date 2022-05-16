@@ -1,7 +1,7 @@
 CFLAGS= -Wextra -g
 
 build: main.o tree.o LinkedList.o
-	gcc main.o tree.o LinkedList.o -o exec
+	gcc main.o tree.o LinkedList.o -o sd_fs
 
 main.o: main.c
 	gcc -c main.c $(CFLAGS)
@@ -13,7 +13,14 @@ LinkedList.o: LinkedList.c
 	gcc -c LinkedList.c $(CFLAGS)
 
 clean:
-	rm -rf *.o exec
+	rm -rf *.o sd_fs
 
 run:
-	./exec < input.txt
+	./sd_fs
+
+valgrind:
+	valgrind --leak-check=full \
+          --show-leak-kinds=all \
+          --track-origins=yes \
+          --verbose \
+		   ./sd_fs

@@ -1,10 +1,4 @@
-touch kikii you_STAY_ON_MY_MIND
-touch macanache
-touch hatz
-mkdir drake
-ls kikii
+mkdir A
+cd A
+touch a
 ls
-cd drake
-touch FairTradeToMe honestly
-cd ..
-ls drake
