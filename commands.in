@@ -4,3 +4,7 @@ touch hatz
 mkdir drake
 ls kikii
 ls
+cd drake
+touch FairTradeToMe honestly
+cd ..
+ls drake

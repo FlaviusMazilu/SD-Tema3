@@ -57,7 +57,7 @@ void mv(TreeNode* currentNode, char* source, char* destination);
 FileTree createFileTree();
 void freeTree(FileTree fileTree);
 TreeNode *create_TN(TreeNode *parent, char *name, enum TreeNodeType type, char *content);
-int find_name_in_folder(TreeNode *currentNode, char *name);
+TreeNode* find_name_in_folder(TreeNode *currentNode, char *name);
 
 #define DIE(assertion, call_description)				\
 	do {								\

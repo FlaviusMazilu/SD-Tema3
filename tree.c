@@ -66,9 +66,28 @@ void pwd(TreeNode* treeNode) {
 
 
 TreeNode* cd(TreeNode* currentNode, char* path) {
-	// TODO
-}
+	TreeNode *currentNode_cp = currentNode;
+	char *path_cp = strdup(path);
+    char *token = strtok(path, "/");
+	while (token) {
+		if (strcmp(token, PARENT_DIR) == 0)
+			currentNode = currentNode->parent;
+		else
+			currentNode = find_name_in_folder(currentNode, token);
+		
+		// daca a vrut sa sara dincolo de root sau la un dir care nu exista
+		if (!currentNode || currentNode->type == FILE_NODE) {
+			printf("cd: no such file or directory: %s\n", path_cp);
+			free(path_cp);
+			return currentNode_cp;
+		}
 
+		// printf("--->%s\n", token);
+		token = strtok(NULL, "/");
+	}
+	free(path_cp);
+	return currentNode;
+}
 
 void tree(TreeNode* currentNode, char* arg) {
 	// TODO
@@ -76,7 +95,7 @@ void tree(TreeNode* currentNode, char* arg) {
 
 
 void mkdir(TreeNode* currentNode, char* folderName) {
-	if (find_name_in_folder(currentNode, folderName) == 1) {
+	if (find_name_in_folder(currentNode, folderName) != NULL) {
 		printf("mkdir: cannot create directory '%s': File exists\n", folderName);
 		return;
 	}
@@ -124,6 +143,14 @@ void touch(TreeNode* currentNode, char* fileName, char* fileContent) {
 	ll_add_nth_node(list, 0, new_TN);
 }
 
+void cp(TreeNode* currentNode, char* source, char* destination) {
+	// TODO
+}
+
+void mv(TreeNode* currentNode, char* source, char* destination) {
+	// TODO
+}
+
 TreeNode *create_TN(TreeNode *parent, char *name, enum TreeNodeType type, char *text_content)
 {
 	TreeNode *new_TN = malloc(sizeof(TreeNode));
@@ -153,15 +180,8 @@ TreeNode *create_TN(TreeNode *parent, char *name, enum TreeNodeType type, char *
 	}
 	return new_TN;
 }
-void cp(TreeNode* currentNode, char* source, char* destination) {
-	// TODO
-}
 
-void mv(TreeNode* currentNode, char* source, char* destination) {
-	// TODO
-}
-
-int find_name_in_folder(TreeNode *currentNode, char *name) {
+TreeNode* find_name_in_folder(TreeNode *currentNode, char *name) {
 	FolderContent *folder_content = currentNode->content;
 	linked_list_t *list = folder_content->children;
 
@@ -169,9 +189,9 @@ int find_name_in_folder(TreeNode *currentNode, char *name) {
 	while (walk) {
 		TreeNode *curr_TN = walk->data;
 		if (strcmp(curr_TN->name, name) == 0)
-			return 1;
+			return curr_TN;
 		walk = walk->next;
 	}
-	return 0;
+	return NULL;
 
 }
