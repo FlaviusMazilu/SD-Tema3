@@ -6,8 +6,8 @@ typedef struct FileContent FileContent;
 typedef struct FolderContent FolderContent;
 typedef struct TreeNode TreeNode;
 typedef struct FileTree FileTree;
-typedef struct ListNode ListNode;
-typedef struct List List;
+// typedef struct ListNode ListNode;
+// typedef struct List List;
 
 enum TreeNodeType {
     FILE_NODE,
@@ -19,7 +19,7 @@ struct FileContent {
 };
 
 struct FolderContent {
-    List* children;
+    linked_list_t* children;
 };
 
 struct TreeNode {
@@ -33,14 +33,14 @@ struct FileTree {
     TreeNode* root;
 };
 
-struct ListNode {
-    TreeNode* info;
-    ListNode* next;
-};
+// struct ListNode {
+//     TreeNode* info;
+//     ListNode* next;
+// };
 
-struct List {
-    ListNode* head;
-};
+// struct List {
+//     ListNode* head;
+// };
 
 
 void ls(TreeNode* currentNode, char* arg);
@@ -56,3 +56,15 @@ void cp(TreeNode* currentNode, char* source, char* destination);
 void mv(TreeNode* currentNode, char* source, char* destination);
 FileTree createFileTree();
 void freeTree(FileTree fileTree);
+TreeNode *create_TN(TreeNode *parent, char *name, enum TreeNodeType type, char *content);
+TreeNode* find_name_in_folder(TreeNode *currentNode, char *name);
+
+#define DIE(assertion, call_description)				\
+	do {								\
+		if (assertion) {					\
+			fprintf(stderr, "(%s, %d): ", __FILE__,		\
+				__LINE__);				\
+			perror(call_description);			\
+			exit(errno);					\
+		}							\
+	} while (0)

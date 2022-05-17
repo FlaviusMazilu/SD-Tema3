@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+
+#include "LinkedList.h"
 #include "tree.h"
+
 #define LINE_MAX_LEN 1000
 #define TOKEN_MAX_LEN 300
 
