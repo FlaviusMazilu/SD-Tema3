@@ -12,7 +12,6 @@
 
 
 FileTree createFileTree(char* rootFolderName) {
-	// TODO
 	FileTree file_tree;
 	// primul NULL->parintele lui root, al doilea NULL->filecontent, ptc e folder
 	file_tree.root = create_TN(NULL, rootFolderName, FOLDER_NODE, NULL);
@@ -31,9 +30,9 @@ void freeTree_wrapper(TreeNode *current_node)
 		if (curr_TN->type == FILE_NODE) {
 			FileContent *file_content = curr_TN->content;
 			free(file_content->text);
-		} else 
+		} else {
 			freeTree_wrapper(curr_TN);
-
+		}
 		free(curr_TN->name);
 		free(curr_TN->content);
 		walk = walk->next;
@@ -53,7 +52,7 @@ void freeTree(FileTree fileTree) {
 void ls(TreeNode* currentNode, char* arg) {
 	FolderContent *folder_content = currentNode->content;
 	linked_list_t *list = folder_content->children;
-	if (*arg == 0) { // afisez numele tuturor folderelor/fisierelor din director
+	if (*arg == 0) {  // afisez num tuturor folderelor/fisierelor din director
 		ll_node_t *walk = list->head;
 		while (walk) {
 			TreeNode *curr_TN = walk->data;
@@ -71,13 +70,13 @@ void ls(TreeNode* currentNode, char* arg) {
 					return ls(curr_TN, "\0");
 				// altfel daca e file_node
 				FileContent *f_content = curr_TN->content;
-				printf("%s\n", f_content->text);
+				printf("%s: %s\n", curr_TN->name, f_content->text);
 				return;
 			}
 			walk = walk->next;
 		}
 		if (!ok) {
-			printf("ls: cannot acces '%s': No such file or directory\n", arg);
+			printf("ls: cannot access '%s': No such file or directory\n", arg);
 			return;
 		}
 	}
@@ -85,7 +84,6 @@ void ls(TreeNode* currentNode, char* arg) {
 
 
 void pwd(TreeNode* treeNode) {
-	// TODO
 }
 
 TreeNode* cd_wrapper(TreeNode *currentNode, char *path)
@@ -96,7 +94,7 @@ TreeNode* cd_wrapper(TreeNode *currentNode, char *path)
 			currentNode = currentNode->parent;
 		else
 			currentNode = find_name_in_folder(currentNode, token);
-		
+
 		// daca a vrut sa sara dincolo de root sau la un dir care nu exista
 		if (!currentNode || currentNode->type == FILE_NODE) {
 			return NULL;
@@ -126,7 +124,7 @@ void tree_wrapper(TreeNode *currentNode, int *dr, int *fl, int tabs)
 	FolderContent *folder_content = currentNode->content;
 	linked_list_t *list = folder_content->children;
 	ll_node_t *walk = list->head;
-	
+
 	while (walk) {
 		TreeNode *curr_TN = walk->data;
 		if (curr_TN->type == FILE_NODE)
@@ -172,36 +170,31 @@ void mkdir(TreeNode* currentNode, char* folderName) {
 	TreeNode *new_dir = create_TN(currentNode, folderName, FOLDER_NODE, NULL);
 	ll_add_nth_node(list, 0, new_dir);
 	free(new_dir);
-
 }
 
 
 void rmrec(TreeNode* currentNode, char* resourceName) {
-	// TODO
 }
 
 
 void rm(TreeNode* currentNode, char* fileName) {
-	// TODO
 }
 
 
 void rmdir(TreeNode* currentNode, char* folderName) {
-	// TODO
 }
 
 
 void touch(TreeNode* currentNode, char* fileName, char* fileContent) {
-	// TODO
-	// currentNode->content
 	FolderContent *folder_content = currentNode->content;
 	linked_list_t *list = folder_content->children;
 	ll_node_t *walk = list->head;
-	// in cazul in care gaseste nodd in lista cu numele fileName, nu mai face o creare noua
+	// in cazul in care gaseste nod in lista cu num fileName,
+	// nu mai face o creare noua
 	while (walk) {
 		TreeNode *curr_treeNode = walk->data;
 		if (strcmp(curr_treeNode->name, fileName) == 0)
-			return; // e deja un folder/file cu numele fileName
+			return;  // e deja un folder/file cu numele fileName
 		walk = walk->next;
 	}
 	// creaza nodul in arbore si initializeaza valorile, inclusiv filecontent
@@ -212,11 +205,9 @@ void touch(TreeNode* currentNode, char* fileName, char* fileContent) {
 }
 
 void cp(TreeNode* currentNode, char* source, char* destination) {
-	// TODO
 }
 
 void mv(TreeNode* currentNode, char* source, char* destination) {
-	// TODO
 }
 
 TreeNode *create_TN(TreeNode *parent, char *name, enum TreeNodeType type, char *text_content)
@@ -242,8 +233,9 @@ TreeNode *create_TN(TreeNode *parent, char *name, enum TreeNodeType type, char *
 			FileContent *file_content = new_TN->content;
 			file_content->text = NULL; // at cand nu avem filecontent
 
-			if (text_content)
+			if (text_content) {
 				file_content->text = text_content;
+			}
 		}
 	}
 	return new_TN;
@@ -261,5 +253,4 @@ TreeNode* find_name_in_folder(TreeNode *currentNode, char *name) {
 		walk = walk->next;
 	}
 	return NULL;
-
 }
