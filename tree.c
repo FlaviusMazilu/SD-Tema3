@@ -204,44 +204,208 @@ void touch(TreeNode* currentNode, char* fileName, char* fileContent) {
 	free(new_TN);
 }
 
+TreeNode* cp_mv_wrapper(TreeNode *currentNode, char *path)
+{
+	char *token = strtok(path, "/");
+	TreeNode *prev_TN = NULL;
+	while (token) {
+		if (strcmp(token, PARENT_DIR) == 0)
+			currentNode = currentNode->parent;
+		else
+			currentNode = find_name_in_folder(currentNode, token);
+
+		if (!currentNode || currentNode->type == FILE_NODE) {
+			token = strtok(NULL, "/");
+			// daca mai urmeaza alt lucru in path, path-ul nu e bun
+			if (token != NULL)  {
+				return NULL;
+			} else {
+				if (!currentNode)  // se poate crea un fisier
+					currentNode = create_TN(prev_TN, token, FILE_NODE, NULL);
+				return currentNode;  // ori s-a creat unul, ori era deja
+			}
+			continue;
+		}
+		prev_TN = currentNode;
+		token = strtok(NULL, "/");
+	}
+	return currentNode;
+}
+
 void cp(TreeNode* currentNode, char* source, char* destination) {
+	char *dst_cp = strdup(destination);
+	char *src_cp = strdup(source);
+
+	TreeNode *source_TN = cp_mv_wrapper(currentNode, src_cp);
+	TreeNode *dest_TN = cp_mv_wrapper(currentNode, dst_cp);
+	free(dst_cp);
+	free(src_cp);
+
+	if (source_TN->type == FOLDER_NODE) {
+		printf("cp: -r not specified; omitting directory '%s'", source);
+		return;
+	}
+
+	if (!dest_TN) {
+		printf("cp: failed to access '%s': Not a directory\n", destination);
+		return;
+	}
+
+	if (dest_TN->type == FOLDER_NODE) {
+		// destinatie = folder -> creez un nod nou unde fac un deep copy
+		// pe fisierul sursa, dupa il inserez in lista de copii ai lui dest
+		linked_list_t *dest_list = ((FolderContent*)(dest_TN->content))->children;
+		char *content = ((FileContent*)(source_TN->content))->text;
+		TreeNode *new_entry = create_TN(dest_TN, strdup(source_TN->name),
+									 FILE_NODE, strdup(content));
+
+		ll_add_nth_node(dest_list, 0, new_entry);
+
+		free(new_entry);
+		return;
+	}
+
+	if (dest_TN->type == FILE_NODE) {
+		// daca destinatia e fisier, ii sterg text-ul de la content
+		// si il fac sa pointeze spre un nou string, o copie al sursei
+		FileContent *file_content_dest = dest_TN->content;
+		FileContent *file_content_src = source_TN->content;
+
+		free(file_content_dest->text);
+		file_content_dest->text = strdup(file_content_src->text);
+
+		return;
+	}
+}
+
+int find_pos_list(char *key, ll_node_t *head)
+{
+	// cauta pozitia fisierului/folderului <key> in lista de copii ai unui folder
+	int contor = 0;
+	while (head) {
+		TreeNode *curr_TN = head->data;
+		if (strcmp(curr_TN->name, key) == 0)
+			break;
+		contor++;
+		head = head->next;
+	}
+	return contor;
 }
 
 void mv(TreeNode* currentNode, char* source, char* destination) {
+	char *dst_cp = strdup(destination);
+	char *src_cp = strdup(source);
+
+	TreeNode *source_TN = cp_mv_wrapper(currentNode, src_cp);
+	TreeNode *dest_TN = cp_mv_wrapper(currentNode, dst_cp);
+	free(dst_cp);
+	free(src_cp);
+
+	if (!dest_TN) {
+		printf("mv: failed to access '%s': Not a directory\n", destination);
+		return;
+	}
+	if (!source_TN) {
+		printf("cp: failed to access '%s': Not a directory\n", source);
+		return;
+	}
+
+	// tratat cazul in care si destinatia si sursa sunt foldere
+	if (dest_TN->type == FOLDER_NODE && source_TN->type == FOLDER_NODE) {
+		// partea de stergere din lista de parinti a sursei, directorul source
+		FolderContent *aux_content = source_TN->parent->content;
+		linked_list_t *list_source_parent = aux_content->children;
+
+		ll_node_t *walk = list_source_parent->head;
+		int contor = find_pos_list(source_TN->name, walk);
+
+		ll_node_t *aux_node = ll_remove_nth_node(list_source_parent, contor);
+		TreeNode *node_to_move = aux_node->data;
+		free(aux_node);
+
+		// partea de adaugare a sursei in lista folderului destinatie
+		aux_content = dest_TN->content;
+		linked_list_t *list_dest = aux_content->children;
+
+		ll_add_nth_node(list_dest, 0, node_to_move);
+		// nu e nevoie sa fie sters decat nodul din lista, nu si campurile lui
+		free(node_to_move);
+		return;
+	}
+
+	// ramane cazul in care sursa e fisier
+	TreeNode *source_parent = source_TN->parent;
+	linked_list_t *list_parent;
+	list_parent = ((FolderContent*)(source_parent)->content)->children;
+	int pos = find_pos_list(source_TN->name, list_parent->head);
+
+	ll_node_t *aux_node = ll_remove_nth_node(list_parent, pos);
+	TreeNode *TN_remove = aux_node->data;
+	free(aux_node);
+
+	if (dest_TN->type == FILE_NODE && source_TN->type == FILE_NODE) {
+		// daca ambele sunt fisiere, free la tot din sursa inafara de content
+		free(TN_remove->name);
+
+		char *content_to_move = ((FileContent*)(TN_remove->content))->text;
+		// ramane doar content care trebuie mutat in destinatie
+
+		FileContent *f_content = dest_TN->content;
+		free(f_content->text);
+		free(f_content);
+		f_content->text = content_to_move;
+		return;
+	}
+
+	if (dest_TN->type == FOLDER_NODE && source_TN->type == FILE_NODE) {
+		// cazul de mutat al unui fisier(TM_remove) in folderul dest_TN
+		linked_list_t *list = ((FolderContent*)(dest_TN->content))->children;
+		ll_add_nth_node(list, 0, TN_remove);
+		free(TN_remove);
+		return;
+	}
 }
 
-TreeNode *create_TN(TreeNode *parent, char *name, enum TreeNodeType type, char *text_content)
+TreeNode *create_TN(TreeNode *parent, char *name,
+					enum TreeNodeType type, char *text_content)
 {
+	// alocarea memoriei pentru un TreeNode
 	TreeNode *new_TN = malloc(sizeof(TreeNode));
 	DIE(!new_TN, "malloc new_TN\n");
 
+	// setarea campurilor date ca parametru
 	new_TN->name = name;
 	new_TN->parent = parent;
 	new_TN->type = type;
 
 	if (type == FOLDER_NODE) {
+		// nod = folder -> campul de content il aloc ca FolderContent
+		// si creez o lista de copii pt folderul nou creat
 		new_TN->content = malloc(sizeof(FolderContent));
 		DIE(!new_TN->content, "malloc new_content folder_node\n");
+
 		((FolderContent*)new_TN->content)->children = ll_create(sizeof(TreeNode));
 		DIE(!((FolderContent*)new_TN->content)->children, "malloc list folder\n");
-	}
-	else {
+	} else {
 		if (type == FILE_NODE) {
+			// daca e file, campul content(void*) il aloc ca FileContent
+			// si daca are si content dat ca parametru la citire il setez
 			new_TN->content = malloc(sizeof(FileContent));
 			DIE(!new_TN->content, "malloc content file_node\n");
 
 			FileContent *file_content = new_TN->content;
-			file_content->text = NULL; // at cand nu avem filecontent
+			file_content->text = NULL;  // at cand nu avem filecontent
 
-			if (text_content) {
+			if (text_content)
 				file_content->text = text_content;
-			}
 		}
 	}
 	return new_TN;
 }
 
 TreeNode* find_name_in_folder(TreeNode *currentNode, char *name) {
+	// functie care testeaza daca in lista unui folder se afla
+	// un fisier/folder cu numele <name>
 	FolderContent *folder_content = currentNode->content;
 	linked_list_t *list = folder_content->children;
 

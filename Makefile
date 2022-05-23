@@ -16,11 +16,11 @@ clean:
 	rm -rf *.o sd_fs
 
 run:
-	./sd_fs
+	./sd_fs < commands.in
 
 valgrind:
 	valgrind --leak-check=full \
           --show-leak-kinds=all \
           --track-origins=yes \
           --verbose \
-		   ./sd_fs
+		   ./sd_fs < commands.in
