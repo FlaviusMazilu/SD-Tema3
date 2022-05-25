@@ -84,6 +84,23 @@ void ls(TreeNode* currentNode, char* arg) {
 
 
 void pwd(TreeNode* treeNode) {
+    int num_path = 0;
+    char v[100][100];
+	int i = 0;
+	strcpy(v[i], treeNode->name);
+	i++;
+	TreeNode *walk = treeNode->parent;
+	while (walk) {
+		strcpy(v[i], walk->name);
+		i++;
+		walk = walk->parent;
+	}
+    for (int aux = i - 1; aux >=0; aux--) {
+		printf("%s", v[aux]);
+		if (aux != 0) {
+			printf("/");
+		}
+	}
 }
 
 TreeNode* cd_wrapper(TreeNode *currentNode, char *path)
@@ -174,14 +191,6 @@ void mkdir(TreeNode* currentNode, char* folderName) {
 
 
 void rmrec(TreeNode* currentNode, char* resourceName) {
-}
-
-
-void rm(TreeNode* currentNode, char* fileName) {
-}
-
-
-void rmdir(TreeNode* currentNode, char* folderName) {
 }
 
 
@@ -417,4 +426,66 @@ TreeNode* find_name_in_folder(TreeNode *currentNode, char *name) {
 		walk = walk->next;
 	}
 	return NULL;
+}
+
+void rm(TreeNode* currentNode, char* fileName)
+{
+	TreeNode  *de_sters = find_name_in_folder(currentNode, fileName);
+	if (de_sters == NULL) {
+		printf("rm: failed to remove '%s': No such file or directory", fileName);
+		return;
+	} else if (de_sters->type == FOLDER_NODE) {
+		printf("rm: cannot remove '%s': Is a directory", fileName);
+		return;
+	} else {
+		FolderContent *folder_content = currentNode->content;
+		linked_list_t *list = folder_content->children;
+		ll_node_t *walk = list->head;
+		int count = 0;
+		int n;
+		while (walk) {
+			TreeNode *curr_TN = walk->data;
+			if (strcmp(curr_TN->name, fileName) == 0)
+				n = count;
+			count++;
+			walk = walk->next;
+		}
+		ll_node_t *to_remove = ll_remove_nth_node(list, n);
+		free(to_remove->data);
+		free(to_remove);
+	}
+}
+
+void rmdir(TreeNode* currentNode, char* folderName)
+{
+	TreeNode  *de_sters = find_name_in_folder(currentNode, folderName);
+	if (de_sters == NULL) {
+		printf("rmdir: failed to remove '%s': No such file or directory", folderName);
+		return;
+	} else if (de_sters->type == FILE_NODE) {
+		printf("rmdir: failed to remove '%s': Not a directory", folderName);
+		return;
+	}
+	FolderContent *folder_content = de_sters->content;
+	linked_list_t *list = folder_content->children;
+	if(list->size != 0) {
+		printf("rmdir: failed to remove '%s': Directory not empty", folderName);
+		return;
+	} else {
+		folder_content = currentNode->content;
+		list = folder_content->children;
+		ll_node_t *walk = list->head;
+		int count = 0;
+		int n;
+		while (walk) {
+			TreeNode *curr_TN = walk->data;
+			if (strcmp(curr_TN->name, folderName) == 0)
+				n = count;
+			count++;
+			walk = walk->next;
+		}
+		ll_node_t *to_remove = ll_remove_nth_node(list, n);
+		free(to_remove->data);
+		free(to_remove);
+	}
 }

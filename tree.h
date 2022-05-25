@@ -6,8 +6,6 @@ typedef struct FileContent FileContent;
 typedef struct FolderContent FolderContent;
 typedef struct TreeNode TreeNode;
 typedef struct FileTree FileTree;
-// typedef struct ListNode ListNode;
-// typedef struct List List;
 
 enum TreeNodeType {
     FILE_NODE,
@@ -32,16 +30,6 @@ struct TreeNode {
 struct FileTree {
     TreeNode* root;
 };
-
-// struct ListNode {
-//     TreeNode* info;
-//     ListNode* next;
-// };
-
-// struct List {
-//     ListNode* head;
-// };
-
 
 void ls(TreeNode* currentNode, char* arg);
 void pwd(TreeNode* treeNode);
