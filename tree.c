@@ -191,6 +191,36 @@ void mkdir(TreeNode* currentNode, char* folderName) {
 
 
 void rmrec(TreeNode* currentNode, char* resourceName) {
+	// cautam in lista dupa nume
+	TreeNode  *de_sters = find_name_in_folder(currentNode, resourceName);
+	if (de_sters == NULL) {
+		// caz in care nu exista directorul
+		printf("rmrec: failed to remove '%s': No such file or directory",
+				resourceName);
+		return;
+	} else {
+		// apelam functia de eliberare a unui arbore plecand de la u  nod
+		freeTree_wrapper(de_sters);
+		// cautam in lista de fisiere si directoare pozitia celui pe care
+		// dorim sa il stergem
+		FolderContent *folder_content = currentNode->content;
+		linked_list_t *list = folder_content->children;
+		ll_node_t *walk_poz = list->head;
+		int count = 0;
+		int n;
+		while (walk_poz) {
+			// parcurgem lista
+			TreeNode *curr_TN = walk_poz->data;
+			if (strcmp(curr_TN->name, resourceName) == 0)
+				n = count;
+			count++;
+			walk_poz = walk_poz->next;
+		}
+		// stergem nodul din lista, aflat pe pozitia n
+		ll_node_t *to_remove = ll_remove_nth_node(list, n);
+		free(to_remove->data);
+		free(to_remove);
+	}
 }
 
 
@@ -353,15 +383,11 @@ void mv(TreeNode* currentNode, char* source, char* destination) {
 	free(aux_node);
 
 	if (dest_TN->type == FILE_NODE && source_TN->type == FILE_NODE) {
-		// daca ambele sunt fisiere, free la tot din sursa inafara de content
-		free(TN_remove->name);
-
 		char *content_to_move = ((FileContent*)(TN_remove->content))->text;
 		// ramane doar content care trebuie mutat in destinatie
 
 		FileContent *f_content = dest_TN->content;
 		free(f_content->text);
-		free(f_content);
 		f_content->text = content_to_move;
 		return;
 	}
