@@ -1,4 +1,4 @@
-// Copyright 2022 Mazilu Flavius-Romeo
+// Copyright 2022 Mazilu Flavius-Romeo & Tarsoaga Vincentiu-Ionut
 #ifndef LINKEDLIST_H_
 #define LINKEDLIST_H_
 

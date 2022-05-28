@@ -1,17 +1,19 @@
+// Copyright 2022 Mazilu Flavius-Romeo & Tarsoaga Vincentiu-Ionut
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
-#include "LinkedList.h"
+#include "linkedList.h"
 #include "tree.h"
 
 #define TREE_CMD_INDENT_SIZE 4
 #define NO_ARG ""
 #define PARENT_DIR ".."
-
+#define MAX_LEN 257
 
 FileTree createFileTree(char* rootFolderName) {
+	// functia care creaza un Tree si aloca root-ul
 	FileTree file_tree;
 	// primul NULL->parintele lui root, al doilea NULL->filecontent, ptc e folder
 	file_tree.root = create_TN(NULL, rootFolderName, FOLDER_NODE, NULL);
@@ -21,6 +23,7 @@ FileTree createFileTree(char* rootFolderName) {
 }
 void freeTree_wrapper(TreeNode *current_node)
 {
+	// functia de free a tree-ului
 	FolderContent *folder_content = current_node->content;
 	linked_list_t *list = folder_content->children;
 	ll_node_t *walk = list->head;
@@ -31,12 +34,16 @@ void freeTree_wrapper(TreeNode *current_node)
 			FileContent *file_content = curr_TN->content;
 			free(file_content->text);
 		} else {
+			// daca nodul e un folder, se apeleaza recursiv
+			// pentru sterge tot din el
 			freeTree_wrapper(curr_TN);
 		}
 		free(curr_TN->name);
 		free(curr_TN->content);
 		walk = walk->next;
 	}
+	// pana in momentul asta s-au sters doar datele efective
+	// acum se sterge si lista unde au fost retinute
 	ll_free(&list);
 }
 
@@ -50,8 +57,10 @@ void freeTree(FileTree fileTree) {
 
 
 void ls(TreeNode* currentNode, char* arg) {
+	// iau var de tip lista din folder
 	FolderContent *folder_content = currentNode->content;
 	linked_list_t *list = folder_content->children;
+	// *arg == 0 inseamna ca nu s-a dat niciun parametru la ls
 	if (*arg == 0) {  // afisez num tuturor folderelor/fisierelor din director
 		ll_node_t *walk = list->head;
 		while (walk) {
@@ -62,6 +71,7 @@ void ls(TreeNode* currentNode, char* arg) {
 	} else {
 		int ok = 0;
 		ll_node_t *walk = list->head;
+		// caut in lista parametrul dat la ls
 		while (walk) {
 			TreeNode *curr_TN = walk->data;
 			if (strcmp(curr_TN->name, arg) == 0) {
@@ -76,6 +86,7 @@ void ls(TreeNode* currentNode, char* arg) {
 			walk = walk->next;
 		}
 		if (!ok) {
+			// daca nu s-a gasit parametrul(fisier/folder cu numele resp)
 			printf("ls: cannot access '%s': No such file or directory\n", arg);
 			return;
 		}
@@ -85,16 +96,18 @@ void ls(TreeNode* currentNode, char* arg) {
 
 void pwd(TreeNode* treeNode) {
     int num_path = 0;
-    char v[100][100];
+    char v[MAX_LEN][MAX_LEN];
 	int i = 0;
 	strcpy(v[i], treeNode->name);
 	i++;
 	TreeNode *walk = treeNode->parent;
+	// pun in vector numele directoarelor
 	while (walk) {
 		strcpy(v[i], walk->name);
 		i++;
 		walk = walk->parent;
 	}
+	// parcurs in sens invers vectorul
     for (int aux = i - 1; aux >=0; aux--) {
 		printf("%s", v[aux]);
 		if (aux != 0) {
@@ -113,6 +126,7 @@ TreeNode* cd_wrapper(TreeNode *currentNode, char *path)
 			currentNode = find_name_in_folder(currentNode, token);
 
 		// daca a vrut sa sara dincolo de root sau la un dir care nu exista
+		// se returneaza NULL, adica nu s-a putut efectua operatia
 		if (!currentNode || currentNode->type == FILE_NODE) {
 			return NULL;
 		}
@@ -142,6 +156,8 @@ void tree_wrapper(TreeNode *currentNode, int *dr, int *fl, int tabs)
 	linked_list_t *list = folder_content->children;
 	ll_node_t *walk = list->head;
 
+	// parcurg toata lista de copii a folderului curent
+	// daca e folder, apelez recursiv func, unde currentNode este acel folder
 	while (walk) {
 		TreeNode *curr_TN = walk->data;
 		if (curr_TN->type == FILE_NODE)
@@ -160,8 +176,11 @@ void tree_wrapper(TreeNode *currentNode, int *dr, int *fl, int tabs)
 }
 void tree(TreeNode* currentNode, char* arg) {
 	char *path_cp = strdup(arg);
+	// daca are un <path> ca arg, se apeleaza mai intai functia de cd_wrapper
+	// care muta current_node-ul in pozitia in Tree de unde trebuie afisat
 	if (*arg != 0) {
 		currentNode = cd_wrapper(currentNode, arg);
+		// daca nu s-a gasit <path> se va afisa un mesaj de eroare
 		if (!currentNode || currentNode->type == FILE_NODE) {
 			printf("%s [error opening dir]\n\n0 directories, 0 files\n", path_cp);
 			free(path_cp);
@@ -176,6 +195,8 @@ void tree(TreeNode* currentNode, char* arg) {
 
 
 void mkdir(TreeNode* currentNode, char* folderName) {
+	// se cauta mai intai daca s-a gasit un fisier/folder deja cu acel nume
+	// daca da, se afiseaza un mesaj de eroare si se iese din func
 	if (find_name_in_folder(currentNode, folderName) != NULL) {
 		printf("mkdir: cannot create directory '%s': File exists\n", folderName);
 		return;
@@ -184,6 +205,8 @@ void mkdir(TreeNode* currentNode, char* folderName) {
 	FolderContent *folder_content = currentNode->content;
 	linked_list_t *list = folder_content->children;
 
+	// se creeaza un TreeNode de tipul "folder" si se adauga in lista de copii
+	// ai nodului curent
 	TreeNode *new_dir = create_TN(currentNode, folderName, FOLDER_NODE, NULL);
 	ll_add_nth_node(list, 0, new_dir);
 	free(new_dir);
@@ -246,13 +269,16 @@ void touch(TreeNode* currentNode, char* fileName, char* fileContent) {
 TreeNode* cp_mv_wrapper(TreeNode *currentNode, char *path)
 {
 	char *token = strtok(path, "/");
+	// prev_TN o sa tina minte mereu directorul anterior in parcurgerea
+	// path-ului, pentru a putea testa daca se poate crea un fisier
 	TreeNode *prev_TN = NULL;
 	while (token) {
 		if (strcmp(token, PARENT_DIR) == 0)
 			currentNode = currentNode->parent;
 		else
 			currentNode = find_name_in_folder(currentNode, token);
-
+		// daca pentru pasul curent din path nu s-a gasit folderul
+		// sau el este fisier
 		if (!currentNode || currentNode->type == FILE_NODE) {
 			token = strtok(NULL, "/");
 			// daca mai urmeaza alt lucru in path, path-ul nu e bun
@@ -261,7 +287,7 @@ TreeNode* cp_mv_wrapper(TreeNode *currentNode, char *path)
 			} else {
 				if (!currentNode)  // se poate crea un fisier
 					currentNode = create_TN(prev_TN, token, FILE_NODE, NULL);
-				return currentNode;  // ori s-a creat unul, ori era deja
+				return currentNode;  // ori s-a creat unul,ori era deja(e file)
 			}
 			continue;
 		}
@@ -272,6 +298,8 @@ TreeNode* cp_mv_wrapper(TreeNode *currentNode, char *path)
 }
 
 void cp(TreeNode* currentNode, char* source, char* destination) {
+	// se fac copii ale lor, pentru a putea afisa mesaj de eroare
+	// corespunzator, intrucat se vor modifica prin strtok
 	char *dst_cp = strdup(destination);
 	char *src_cp = strdup(source);
 
@@ -280,18 +308,20 @@ void cp(TreeNode* currentNode, char* source, char* destination) {
 	free(dst_cp);
 	free(src_cp);
 
+	// daca sursa este un folder, se afiseaza mesaj de eroare
 	if (source_TN->type == FOLDER_NODE) {
 		printf("cp: -r not specified; omitting directory '%s'", source);
 		return;
 	}
 
+	// daca nu exista nodul de destinatie, si nici nu a putut fi creat
 	if (!dest_TN) {
 		printf("cp: failed to access '%s': Not a directory\n", destination);
 		return;
 	}
 
 	if (dest_TN->type == FOLDER_NODE) {
-		// destinatie = folder -> creez un nod nou unde fac un deep copy
+		// destinatie = folder -> creez un ListNode nou unde fac un deep copy
 		// pe fisierul sursa, dupa il inserez in lista de copii ai lui dest
 		linked_list_t *dest_list = ((FolderContent*)(dest_TN->content))->children;
 		char *content = ((FileContent*)(source_TN->content))->text;
@@ -384,8 +414,8 @@ void mv(TreeNode* currentNode, char* source, char* destination) {
 
 	if (dest_TN->type == FILE_NODE && source_TN->type == FILE_NODE) {
 		char *content_to_move = ((FileContent*)(TN_remove->content))->text;
-		// ramane doar content care trebuie mutat in destinatie
 
+		// ramane doar content care trebuie mutat in destinatie
 		FileContent *f_content = dest_TN->content;
 		free(f_content->text);
 		f_content->text = content_to_move;
@@ -456,7 +486,7 @@ TreeNode* find_name_in_folder(TreeNode *currentNode, char *name) {
 
 void rm(TreeNode* currentNode, char* fileName)
 {
-	TreeNode  *de_sters = find_name_in_folder(currentNode, fileName);
+	TreeNode *de_sters = find_name_in_folder(currentNode, fileName);
 	if (de_sters == NULL) {
 		printf("rm: failed to remove '%s': No such file or directory", fileName);
 		return;
@@ -467,16 +497,10 @@ void rm(TreeNode* currentNode, char* fileName)
 		FolderContent *folder_content = currentNode->content;
 		linked_list_t *list = folder_content->children;
 		ll_node_t *walk = list->head;
-		int count = 0;
-		int n;
-		while (walk) {
-			TreeNode *curr_TN = walk->data;
-			if (strcmp(curr_TN->name, fileName) == 0)
-				n = count;
-			count++;
-			walk = walk->next;
-		}
-		ll_node_t *to_remove = ll_remove_nth_node(list, n);
+
+		// se ia pozitia nodului cu numele fileName si apoi se sterge din lista
+		int count = find_pos_list(fileName, walk);
+		ll_node_t *to_remove = ll_remove_nth_node(list, count);
 		free(to_remove->data);
 		free(to_remove);
 	}
@@ -501,16 +525,9 @@ void rmdir(TreeNode* currentNode, char* folderName)
 		folder_content = currentNode->content;
 		list = folder_content->children;
 		ll_node_t *walk = list->head;
-		int count = 0;
-		int n;
-		while (walk) {
-			TreeNode *curr_TN = walk->data;
-			if (strcmp(curr_TN->name, folderName) == 0)
-				n = count;
-			count++;
-			walk = walk->next;
-		}
-		ll_node_t *to_remove = ll_remove_nth_node(list, n);
+
+		int count = find_pos_list(folderName, walk);
+		ll_node_t *to_remove = ll_remove_nth_node(list, count);
 		free(to_remove->data);
 		free(to_remove);
 	}

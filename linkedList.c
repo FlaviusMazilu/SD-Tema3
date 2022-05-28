@@ -1,10 +1,10 @@
-// Copyright 2022 Mazilu Flavius-Romeo
+// Copyright 2022 Mazilu Flavius-Romeo & Tarsoaga Vincentiu-Ionut
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 
-#include "./LinkedList.h"
+#include "./linkedList.h"
 
 #define MAX_STRING_SIZE 64
 

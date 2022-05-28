@@ -1,8 +1,9 @@
-touch a content_a
-ls a
+mkdir A
 touch b content_b
-ls b
-touch c content_c
-ls c
-touch d content_d
+cd A 
+touch a content_a
+mv ../b a
+ls a 
+cd ..
+touch d
 ls

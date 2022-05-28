@@ -1,3 +1,7 @@
+// Copyright 2022 Mazilu Flavius-Romeo & Tarsoaga Vincentiu-Ionut
+#ifndef TREE_H_
+#define TREE_H_
+
 #define TREE_CMD_INDENT_SIZE 4
 #define NO_ARG ""
 #define PARENT_DIR ".."
@@ -44,7 +48,8 @@ void cp(TreeNode* currentNode, char* source, char* destination);
 void mv(TreeNode* currentNode, char* source, char* destination);
 FileTree createFileTree();
 void freeTree(FileTree fileTree);
-TreeNode *create_TN(TreeNode *parent, char *name, enum TreeNodeType type, char *content);
+TreeNode *create_TN(TreeNode *parent, char *name,
+                    enum TreeNodeType type, char *content);
 TreeNode* find_name_in_folder(TreeNode *currentNode, char *name);
 
 #define DIE(assertion, call_description)				\
@@ -56,3 +61,4 @@ TreeNode* find_name_in_folder(TreeNode *currentNode, char *name);
 			exit(errno);					\
 		}							\
 	} while (0)
+#endif  // TREE_H_

@@ -1,6 +1,7 @@
+// Copyright 2022 Mazilu Flavius-Romeo & Tarsoaga Vincentiu-Ionut
 #include <stdio.h>
 #include <string.h>
-#include "LinkedList.h"
+#include "linkedList.h"
 #include "tree.h"
 
 #define LINE_MAX_LEN 1000

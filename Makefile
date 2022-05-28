@@ -1,7 +1,7 @@
-CFLAGS= -Wextra -g
+CFLAGS= -Wextra -g -std=c99
 
-build: main.o tree.o LinkedList.o
-	gcc main.o tree.o LinkedList.o -o sd_fs
+build: main.o tree.o linkedList.o
+	gcc main.o tree.o linkedList.o -o sd_fs
 
 main.o: main.c
 	gcc -c main.c $(CFLAGS)
@@ -9,11 +9,11 @@ main.o: main.c
 tree.o: tree.c
 	gcc -c tree.c $(CFLAGS)
 
-LinkedList.o: LinkedList.c 
-	gcc -c LinkedList.c $(CFLAGS)
+linkedList.o: linkedList.c 
+	gcc -c linkedList.c $(CFLAGS)
 
 clean:
-	rm -rf *.o sd_fs
+	rm -rf *.o sd_fs Mazilu_Tarsoaga_Tema3_SD.zip
 
 run:
 	./sd_fs < commands.in
@@ -24,3 +24,6 @@ valgrind:
           --track-origins=yes \
           --verbose \
 		   ./sd_fs < commands.in
+
+pack:
+	zip Mazilu_Tarsoaga_Tema3_SD.zip *.c *.h README.md Makefile
